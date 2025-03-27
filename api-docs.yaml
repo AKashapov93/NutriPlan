@@ -1,0 +1,305 @@
+openapi: 3.0.1
+info:
+  title: NutriPlan API
+  version: "1.0"
+servers:
+- url: http://localhost:8081
+  description: Generated server url
+paths:
+  /user:
+    post:
+      tags:
+      - Пользователь
+      summary: Создание пользователя
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UserDto'
+  /user/quota-to-day:
+    post:
+      tags:
+      - Пользователь
+      summary: Проверка уложился ли пользователь в дневную норму
+      operationId: calculateCaloriesPerDay
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeDto'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: boolean
+  /user/history-to-day:
+    post:
+      tags:
+      - Пользователь
+      summary: Получение суммы калорий и истории приемов пищи за день
+      operationId: getDailyCaloriesAndMeals
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeDto'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MealsToTimeDto'
+  /meal:
+    post:
+      tags:
+      - Прием пищи
+      summary: Добавление приема пищи
+      operationId: addMeal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMealDto'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MealDto'
+  /dish:
+    get:
+      tags:
+      - Блюдо
+      summary: Получение всех доступных блюд
+      operationId: getAllDishes
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/DishesDto'
+    post:
+      tags:
+      - Блюдо
+      summary: Добавление нового блюда
+      operationId: addDish
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DishDto'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/DishDto'
+  /user/history/{id}:
+    get:
+      tags:
+      - Пользователь
+      summary: Получение истории приемов пищи пользователя
+      operationId: getHistoryToDays
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MealsDto'
+components:
+  schemas:
+    UserDto:
+      required:
+      - goal
+      type: object
+      properties:
+        username:
+          maxLength: 32
+          minLength: 4
+          type: string
+          description: Логин пользователя
+        email:
+          type: string
+          description: Электронная почта
+          example: user@example.com
+        age:
+          type: integer
+          description: Возраст
+          format: int32
+          example: 25
+        weight:
+          type: number
+          description: Вес (кг)
+          format: double
+          example: 70.5
+        height:
+          type: number
+          description: Рост (см)
+          format: double
+          example: 175.0
+        goal:
+          type: string
+          description: Цель
+          example: WEIGHT_LOSS
+          enum:
+          - WEIGHT_LOSS
+          - MAINTENANCE
+          - MUSCLE_GAIN
+    TimeDto:
+      type: object
+      properties:
+        time:
+          type: string
+          description: Дата
+          format: date
+        userId:
+          type: integer
+          description: Идентификатор пользователя
+          format: int64
+    DishDto:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 16
+          minLength: 2
+          type: string
+          description: Название блюда
+          example: Салат Цезарь
+        caloriesPerServing:
+          type: number
+          description: Калории на порцию
+          format: double
+          example: 250.5
+        proteins:
+          type: number
+          description: Белки (г)
+          format: double
+          example: 12.3
+        fats:
+          type: number
+          description: Жиры (г)
+          format: double
+          example: 8.5
+        carbohydrates:
+          type: number
+          description: Углеводы (г)
+          format: double
+          example: 20.0
+      description: Блюда составляющие этот прием пищи
+    MealDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: Идентификатор пользователя
+          format: int64
+        caloriesPerMeal:
+          type: number
+          description: Сумма калорий за прием пищи
+          format: double
+        mealType:
+          type: string
+          description: Тип приёма пищи
+          example: BREAKFAST
+          enum:
+          - BREAKFAST
+          - LUNCH
+          - DINNER
+          - SNACK
+        createMealDate:
+          type: string
+          description: Время приема пищи
+          format: date-time
+        dishes:
+          type: array
+          description: Блюда составляющие этот прием пищи
+          items:
+            $ref: '#/components/schemas/DishDto'
+      description: Список приемов пищи за день
+    MealsToTimeDto:
+      type: object
+      properties:
+        mealDtoList:
+          type: array
+          description: Список приемов пищи за день
+          items:
+            $ref: '#/components/schemas/MealDto'
+        calories:
+          type: number
+          description: Сумма калорий за день
+          format: double
+    CreateMealDto:
+      required:
+      - dishesId
+      - mealType
+      - userId
+      type: object
+      properties:
+        userId:
+          type: integer
+          description: Идентификатор пользователя
+          format: int64
+        mealType:
+          type: string
+          description: Тип приёма пищи
+          example: BREAKFAST
+          enum:
+          - BREAKFAST
+          - LUNCH
+          - DINNER
+          - SNACK
+        dishesId:
+          type: array
+          description: Список идентификаторов блюд
+          items:
+            type: integer
+            description: Список идентификаторов блюд
+            format: int64
+    MealsDto:
+      type: object
+      properties:
+        localDateTimeListMap:
+          type: object
+          additionalProperties:
+            type: array
+            description: Сгруппированные по дням приемы пищи
+            items:
+              $ref: '#/components/schemas/MealDto'
+          description: Сгруппированные по дням приемы пищи
+    DishesDto:
+      type: object
+      properties:
+        dishes:
+          type: array
+          description: Список блюд.
+          items:
+            $ref: '#/components/schemas/DishDto'
